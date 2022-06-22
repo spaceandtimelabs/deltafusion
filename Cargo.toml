@@ -1,0 +1,12 @@
+[package]
+name = "deltafusion"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+deltalake = { git = "https://github.com/delta-io/delta-rs.git", branch = "main", features=["datafusion-ext"] }
+datafusion-cli = "8.0.0"
+datafusion = "8.0.0"
+tokio = "1.19.2"
