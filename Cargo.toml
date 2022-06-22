@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 deltalake = { git = "https://github.com/delta-io/delta-rs.git", branch = "main", features=["datafusion-ext"] }
-datafusion-cli = "8.0.0"
-datafusion = "8.0.0"
+datafusion-cli = "9.0.0"
+datafusion = "9.0.0"
 tokio = "1.19.2"
