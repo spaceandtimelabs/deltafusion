@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+use std::fs;
 use std::sync::Arc;
 use datafusion::prelude::{SessionContext};
 use datafusion_cli::context::Context;
@@ -16,11 +18,22 @@ async fn main() -> Result<()> {
     };
 
     let ctx = SessionContext::new();
-    let table = deltalake::open_table("/home/bgardner/workspace/ignite-arrow-store/data")
-        .await
-        .unwrap();
-    ctx.register_table("demo", Arc::new(table))?;
+
+    let dir = "/home/bgardner/workspace/delta-populate-tpch/spark-warehouse/";
+    let paths = fs::read_dir(dir).unwrap();
+    for path in paths {
+        let path = path.unwrap();
+        let name = path.file_name().to_str().unwrap().to_string();
+        let dir = path.path().to_str().unwrap().to_string();
+        println!("Name: {}", name);
+        let table = deltalake::open_table(dir.as_str())
+            .await
+            .unwrap();
+        ctx.register_table(name.as_str(), Arc::new(table))?;
+    }
     let mut ctx = Context::Local(ctx);
+
+    ctx.sql("select * from lineitem limit 5").await.unwrap().show().await.unwrap();
 
     exec::exec_from_repl(&mut ctx, &mut print_options).await;
 
