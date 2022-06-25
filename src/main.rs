@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 use std::fs;
 use std::sync::Arc;
+use std::time::Instant;
 use datafusion::prelude::{SessionContext};
 use datafusion_cli::context::Context;
 use datafusion_cli::exec;
@@ -33,29 +34,18 @@ async fn main() -> Result<()> {
     }
     let mut ctx = Context::Local(ctx);
 
-    ctx.sql(r#"
-select
-    l_returnflag,
-    l_linestatus,
-    sum(l_quantity) as sum_qty,
-    sum(l_extendedprice) as sum_base_price,
-    sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
-    sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    avg(l_quantity) as avg_qty,
-    avg(l_extendedprice) as avg_price,
-    avg(l_discount) as avg_disc,
-    count(*) as count_order
-from
-    lineitem
-where
-    l_shipdate <= date '1998-09-02'
-group by
-    l_returnflag,
-    l_linestatus
-order by
-    l_returnflag,
-    l_linestatus;
-    "#).await.unwrap().show().await.unwrap();
+    let dir = "queries/";
+    let paths = fs::read_dir(dir).unwrap();
+    for path in paths {
+        let path = path.unwrap();
+        let name = path.file_name().to_str().unwrap().to_string();
+        let dir = path.path().to_str().unwrap().to_string();
+        let contents = fs::read_to_string(dir).unwrap();
+        let start = Instant::now();
+        ctx.sql(contents.as_str()).await.unwrap().show().await.unwrap();
+        let elapsed = start.elapsed().as_secs_f64() * 1000.0;
+        println!( "{} took {:.1} ms", name, elapsed );
+    }
 
     exec::exec_from_repl(&mut ctx, &mut print_options).await;
 
